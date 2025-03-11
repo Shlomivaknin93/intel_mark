@@ -3,8 +3,6 @@ import time
 from datetime import datetime
 from twilio.rest import Client
 import requests
-import yfinance as yf
-
 
 class IntelUpdateTracker:
     def __init__(self):
@@ -16,16 +14,19 @@ class IntelUpdateTracker:
         self.RECIPIENT_WHATSAPP_NUMBER = 'whatsapp:+972502245810'
 
     def get_stock_information(self):
-        """Retrieve current stock information for Intel."""
-        stock = yf.Ticker("INTC")
-        info = stock.info
-        current_price = info.get('currentPrice', 'N/A')
-        market_cap = info.get('marketCap', 'N/A')
-
-        return {'price': current_price, 'market_cap': market_cap}
+        """Retrieve current stock information for Intel from Alpha Vantage."""
+        url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=INTC&apikey={self.ALPHA_VANTAGE_API_KEY}'
+        try:
+            response = requests.get(url)
+            data = response.json().get("Global Quote", {})
+            current_price = data.get("05. price", "N/A")
+            market_cap = "Unavailable in Alpha Vantage"
+            return {'price': current_price, 'market_cap': market_cap}
+        except Exception as e:
+            return {'price': 'Error', 'market_cap': str(e)}
 
     def get_company_news(self):
-        """Fetch recent news about Intel."""
+        """Fetch recent news about Intel from Alpha Vantage."""
         url = f'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=INTC&apikey={self.ALPHA_VANTAGE_API_KEY}'
         try:
             response = requests.get(url)
@@ -72,17 +73,17 @@ class IntelUpdateTracker:
         management_changes = self.get_management_changes()
         tech_updates = self.get_technology_updates()
 
-        report = f"📊 Intel Daily Update - {datetime.now().strftime('%Y-%m-%d')}\n\n"
-        report += "💹 Stock Information:\n"
+        report = f"\U0001F4CA Intel Daily Update - {datetime.now().strftime('%Y-%m-%d')}\n\n"
+        report += "\U0001F4B9 Stock Information:\n"
         report += f"Current Price: ${stock_info['price']}\n"
-        report += f"Market Cap: ${stock_info['market_cap']:,}\n\n"
-        report += "📰 Recent News:\n"
+        report += f"Market Cap: {stock_info['market_cap']}\n\n"
+        report += "\U0001F4F0 Recent News:\n"
         for article in news:
             report += f"- {article['title']}\n"
-        report += "\n👥 Management Updates:\n"
+        report += "\n\U0001F465 Management Updates:\n"
         for change in management_changes:
             report += f"- {change}\n"
-        report += "\n🚀 Technology Developments:\n"
+        report += "\n\U0001F680 Technology Developments:\n"
         for tech in tech_updates:
             report += f"- {tech}\n"
 
